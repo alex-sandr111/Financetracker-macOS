@@ -1,0 +1,164 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		100000000000000000000011 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000010 /* Models.swift */; };
+		100000000000000000000013 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000012 /* HistoryView.swift */; };
+		100000000000000000000015 /* GoalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000014 /* GoalsView.swift */; };
+		100000000000000000000017 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000016 /* ContentView.swift */; };
+		100000000000000000000019 /* FinanceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000018 /* FinanceStore.swift */; };
+		10000000000000000000001B /* Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10000000000000000000001A /* Formatting.swift */; };
+		10000000000000000000001D /* EntryEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10000000000000000000001C /* EntryEditorView.swift */; };
+		10000000000000000000001F /* FinanceTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10000000000000000000001E /* FinanceTrackerApp.swift */; };
+		100000000000000000000021 /* AccountEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000020 /* AccountEditorView.swift */; };
+		100000000000000000000023 /* GoalEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000022 /* GoalEditorView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		100000000000000000000010 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		100000000000000000000012 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		100000000000000000000014 /* GoalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalsView.swift; sourceTree = "<group>"; };
+		100000000000000000000016 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		100000000000000000000018 /* FinanceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceStore.swift; sourceTree = "<group>"; };
+		10000000000000000000001A /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
+		10000000000000000000001C /* EntryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryEditorView.swift; sourceTree = "<group>"; };
+		10000000000000000000001E /* FinanceTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceTrackerApp.swift; sourceTree = "<group>"; };
+		100000000000000000000020 /* AccountEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountEditorView.swift; sourceTree = "<group>"; };
+		100000000000000000000022 /* GoalEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalEditorView.swift; sourceTree = "<group>"; };
+		100000000000000000000005 /* FinanceTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FinanceTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		100000000000000000000007 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		100000000000000000000002 = {isa = PBXGroup; children = (10000000000000000000000F /* FinanceTracker */, 100000000000000000000003 /* Products */); sourceTree = "<group>"; };
+		10000000000000000000000F /* FinanceTracker */ = {isa = PBXGroup; children = (
+			100000000000000000000010 /* Models.swift */,
+			100000000000000000000012 /* HistoryView.swift */,
+			100000000000000000000014 /* GoalsView.swift */,
+			100000000000000000000016 /* ContentView.swift */,
+			100000000000000000000018 /* FinanceStore.swift */,
+			10000000000000000000001A /* Formatting.swift */,
+			10000000000000000000001C /* EntryEditorView.swift */,
+			10000000000000000000001E /* FinanceTrackerApp.swift */,
+			100000000000000000000020 /* AccountEditorView.swift */,
+			100000000000000000000022 /* GoalEditorView.swift */,
+		); path = FinanceTracker; sourceTree = "<group>"; };
+		100000000000000000000003 /* Products */ = {isa = PBXGroup; children = (100000000000000000000005 /* FinanceTracker.app */,); name = Products; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		100000000000000000000004 /* FinanceTracker */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 10000000000000000000000A /* Build configuration list for PBXNativeTarget "FinanceTracker" */;
+			buildPhases = (100000000000000000000006 /* Sources */, 100000000000000000000007 /* Frameworks */, 100000000000000000000008 /* Resources */,);
+			buildRules = ();
+			dependencies = ();
+			name = FinanceTracker;
+			productName = FinanceTracker;
+			productReference = 100000000000000000000005 /* FinanceTracker.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		100000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {100000000000000000000004 = {CreatedOnToolsVersion = 26.0; }; };
+			};
+			buildConfigurationList = 100000000000000000000009 /* Build configuration list for PBXProject "FinanceTracker" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base);
+			mainGroup = 100000000000000000000002;
+			productRefGroup = 100000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (100000000000000000000004 /* FinanceTracker */,);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		100000000000000000000008 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		100000000000000000000006 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
+			100000000000000000000011 /* Models.swift in Sources */,
+			100000000000000000000013 /* HistoryView.swift in Sources */,
+			100000000000000000000015 /* GoalsView.swift in Sources */,
+			100000000000000000000017 /* ContentView.swift in Sources */,
+			100000000000000000000019 /* FinanceStore.swift in Sources */,
+			10000000000000000000001B /* Formatting.swift in Sources */,
+			10000000000000000000001D /* EntryEditorView.swift in Sources */,
+			10000000000000000000001F /* FinanceTrackerApp.swift in Sources */,
+			100000000000000000000021 /* AccountEditorView.swift in Sources */,
+			100000000000000000000023 /* GoalEditorView.swift in Sources */,
+		); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		10000000000000000000000B /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			}; name = Debug; };
+		10000000000000000000000C /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			}; name = Release; };
+		10000000000000000000000D /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = FinanceTracker;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MARKETING_VERSION = 0.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.FinanceTracker;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+			}; name = Debug; };
+		10000000000000000000000E /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = FinanceTracker;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MARKETING_VERSION = 0.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.FinanceTracker;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+			}; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		100000000000000000000009 /* Build configuration list for PBXProject "FinanceTracker" */ = {isa = XCConfigurationList; buildConfigurations = (10000000000000000000000B /* Debug */, 10000000000000000000000C /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		10000000000000000000000A /* Build configuration list for PBXNativeTarget "FinanceTracker" */ = {isa = XCConfigurationList; buildConfigurations = (10000000000000000000000D /* Debug */, 10000000000000000000000E /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = 100000000000000000000001 /* Project object */;
+}
