@@ -27,27 +27,38 @@ final class FinanceStore: ObservableObject {
             withIntermediateDirectories: true
         )
 
-        defaultStorageURL = folder.appendingPathComponent("finance.json")
+        let resolvedDefaultStorageURL = folder.appendingPathComponent("finance.json")
+        defaultStorageURL = resolvedDefaultStorageURL
 
         let savedPath = UserDefaults.standard.string(forKey: "FinanceTracker.activeStoragePath")
+        let resolvedStorageURL: URL
         if let savedPath, !savedPath.isEmpty {
-            storageURL = URL(fileURLWithPath: savedPath)
+            resolvedStorageURL = URL(fileURLWithPath: savedPath)
         } else {
-            storageURL = defaultStorageURL
+            resolvedStorageURL = resolvedDefaultStorageURL
         }
+        storageURL = resolvedStorageURL
 
-        encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        encoder.dateEncodingStrategy = .iso8601
+        let configuredEncoder = JSONEncoder()
+        configuredEncoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        configuredEncoder.dateEncodingStrategy = .iso8601
+        encoder = configuredEncoder
 
-        decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        let configuredDecoder = JSONDecoder()
+        configuredDecoder.dateDecodingStrategy = .iso8601
+        decoder = configuredDecoder
 
-        if let data = try? Data(contentsOf: storageURL),
-           let decoded = try? decoder.decode(FinanceDocument.self, from: data) {
+        let needsInitialSave: Bool
+        if let data = try? Data(contentsOf: resolvedStorageURL),
+           let decoded = try? configuredDecoder.decode(FinanceDocument.self, from: data) {
             document = decoded
+            needsInitialSave = false
         } else {
             document = FinanceDocument()
+            needsInitialSave = true
+        }
+
+        if needsInitialSave {
             save()
         }
     }

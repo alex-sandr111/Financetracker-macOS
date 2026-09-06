@@ -3,13 +3,18 @@
 
 # Xcode
 DerivedData/
-*.xcuserstate
 xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
 
-# Swift Package Manager
+# Swift
 .build/
 .swiftpm/
 
-# User-specific Xcode settings
-*.xccheckout
-*.xcscmblueprint
+# Local build output
+build/
+dist/
+
+# Generated archives
+*.zip

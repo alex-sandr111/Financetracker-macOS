@@ -85,3 +85,18 @@ Dock icon is now also set explicitly at runtime through `NSApplication.applicati
 - Альтернативный путь запоминается между запусками.
 - При работе не с основным файлом в боковой панели показывается индикатор «Демо-хранилище».
 - Кнопка «Вернуться к основным данным» мгновенно возвращает приложение к стандартному файлу.
+
+
+## v5.0.1
+
+Исправлена инициализация переключаемого хранилища под Swift 6 strict concurrency/initialization rules.
+
+## Готовая .app-сборка
+
+Для сборки настоящего приложения без запуска из Xcode:
+
+```bash
+./build-app.sh
+```
+
+Результат появится в `dist/FinanceTracker.app` и `dist/FinanceTracker.zip`.
