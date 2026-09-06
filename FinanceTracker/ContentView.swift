@@ -440,9 +440,9 @@ struct IrregularExpensesView: View {
                         systemImage: "list.bullet"
                     )
                     IrregularSummaryCard(
-                        title: "Запланировано на \(store.selectedYear)",
-                        value: AppFormatting.money(store.irregularExpenseTotal(for: store.selectedYear)),
-                        systemImage: "calendar"
+                        title: "Ещё осталось в этом году",
+                        value: AppFormatting.money(store.remainingIrregularExpenseTotalThisYear()),
+                        systemImage: "calendar.badge.clock"
                     )
                 }
 

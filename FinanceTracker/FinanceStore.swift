@@ -93,16 +93,39 @@ final class FinanceStore: ObservableObject {
             }
     }
 
-    func irregularExpenseTotal(for year: Int) -> Double {
-        irregularExpenses.reduce(0) { total, entry in
-            switch entry.recurrence {
-            case .oneTime:
-                return total + (entry.oneTimeYear == year ? entry.amount : 0)
-            case .monthly:
-                return total
-            case .quarterly, .yearly, .custom:
-                return total + entry.amount * Double(entry.activeMonths.count)
+    func remainingIrregularExpenseTotalThisYear(relativeTo date: Date = Date()) -> Double {
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: date)
+        let currentMonth = calendar.component(.month, from: date)
+
+        return irregularExpenses.reduce(0) { total, entry in
+            let remainingForEntry = (currentMonth...12).reduce(0.0) { subtotal, month in
+                guard entry.isActive(in: currentYear, month: month) else {
+                    return subtotal
+                }
+
+                guard !isCompleted(entry, year: currentYear, month: month) else {
+                    return subtotal
+                }
+
+                if month == currentMonth {
+                    let referenceDate = budgetReferenceDate(
+                        forYear: currentYear,
+                        month: month,
+                        relativeTo: date
+                    )
+                    return subtotal + entry.remainingExpenseAmount(
+                        in: currentYear,
+                        month: month,
+                        at: referenceDate,
+                        calendar: calendar
+                    )
+                }
+
+                return subtotal + entry.amount
             }
+
+            return total + remainingForEntry
         }
     }
 
@@ -187,7 +210,11 @@ final class FinanceStore: ObservableObject {
     }
 
     func isCompleted(_ entry: FinanceEntry) -> Bool {
-        document.completion[statusKey(for: entry)] ?? false
+        isCompleted(entry, year: selectedYear, month: selectedMonth)
+    }
+
+    private func isCompleted(_ entry: FinanceEntry, year: Int, month: Int) -> Bool {
+        document.completion[statusKey(for: entry, year: year, month: month)] ?? false
     }
 
     func toggleCompletion(_ entry: FinanceEntry) {
@@ -383,10 +410,14 @@ final class FinanceStore: ObservableObject {
     }
 
     private func statusKey(for entry: FinanceEntry) -> String {
+        statusKey(for: entry, year: selectedYear, month: selectedMonth)
+    }
+
+    private func statusKey(for entry: FinanceEntry, year: Int, month: Int) -> String {
         EntryStatusKey(
             entryID: entry.id,
-            year: selectedYear,
-            month: selectedMonth
+            year: year,
+            month: month
         ).stringValue
     }
 
