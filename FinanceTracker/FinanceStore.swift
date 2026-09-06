@@ -59,16 +59,50 @@ final class FinanceStore: ObservableObject {
 
     var activeExpenses: [FinanceEntry] {
         document.entries.filter {
-            $0.kind == .expense && $0.isActive(in: selectedMonth)
+            $0.kind == .expense && $0.isActive(in: selectedYear, month: selectedMonth)
         }
         .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
     }
 
     var activeIncomes: [FinanceEntry] {
         document.entries.filter {
-            $0.kind == .income && $0.isActive(in: selectedMonth)
+            $0.kind == .income && $0.isActive(in: selectedYear, month: selectedMonth)
         }
         .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+
+    var irregularExpenses: [FinanceEntry] {
+        document.entries
+            .filter { $0.kind == .expense && $0.isIrregular }
+            .sorted { lhs, rhs in
+                let rank: (EntryRecurrence) -> Int = { recurrence in
+                    switch recurrence {
+                    case .oneTime: 0
+                    case .quarterly: 1
+                    case .yearly: 2
+                    case .custom: 3
+                    case .monthly: 4
+                    }
+                }
+
+                if rank(lhs.recurrence) != rank(rhs.recurrence) {
+                    return rank(lhs.recurrence) < rank(rhs.recurrence)
+                }
+                return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+            }
+    }
+
+    func irregularExpenseTotal(for year: Int) -> Double {
+        irregularExpenses.reduce(0) { total, entry in
+            switch entry.recurrence {
+            case .oneTime:
+                return total + (entry.oneTimeYear == year ? entry.amount : 0)
+            case .monthly:
+                return total
+            case .quarterly, .yearly, .custom:
+                return total + entry.amount * Double(entry.activeMonths.count)
+            }
+        }
     }
 
     var totalAssets: Double {
@@ -166,6 +200,9 @@ final class FinanceStore: ObservableObject {
         amount: Double,
         kind: EntryKind,
         activeMonths: [Int],
+        recurrence: EntryRecurrence,
+        oneTimeYear: Int?,
+        oneTimeMonth: Int?,
         note: String
     ) {
         captureSnapshot(reason: "Добавлен \(kind.rawValue.lowercased()) \(title)")
@@ -175,6 +212,9 @@ final class FinanceStore: ObservableObject {
                 amount: amount,
                 kind: kind,
                 activeMonths: Array(Set(activeMonths)).sorted(),
+                recurrence: recurrence,
+                oneTimeYear: oneTimeYear,
+                oneTimeMonth: oneTimeMonth,
                 note: note
             )
         )
@@ -187,6 +227,9 @@ final class FinanceStore: ObservableObject {
         amount: Double,
         kind: EntryKind,
         activeMonths: [Int],
+        recurrence: EntryRecurrence,
+        oneTimeYear: Int?,
+        oneTimeMonth: Int?,
         note: String
     ) {
         guard let index = document.entries.firstIndex(where: { $0.id == entry.id }) else { return }
@@ -195,6 +238,9 @@ final class FinanceStore: ObservableObject {
         document.entries[index].amount = amount
         document.entries[index].kind = kind
         document.entries[index].activeMonths = Array(Set(activeMonths)).sorted()
+        document.entries[index].recurrence = recurrence
+        document.entries[index].oneTimeYear = oneTimeYear
+        document.entries[index].oneTimeMonth = oneTimeMonth
         document.entries[index].note = note
         persistAndPublish()
     }

@@ -159,7 +159,7 @@ private struct SnapshotDetailView: View {
 
     private func activeEntries(_ snapshot: FinanceSnapshot) -> [FinanceEntry] {
         snapshot.payload.entries.filter {
-            $0.isActive(in: snapshot.payload.selectedMonth)
+            $0.isActive(in: snapshot.payload.selectedYear, month: snapshot.payload.selectedMonth)
         }
         .sorted { lhs, rhs in
             if lhs.kind != rhs.kind {
@@ -185,7 +185,7 @@ private struct SnapshotDetailView: View {
             .reduce(0) { $0 + $1.balance }
 
         let month = snapshot.payload.selectedMonth
-        let active = snapshot.payload.entries.filter { $0.isActive(in: month) }
+        let active = snapshot.payload.entries.filter { $0.isActive(in: snapshot.payload.selectedYear, month: month) }
 
         let income = active
             .filter { $0.kind == .income && !isCompleted($0, snapshot) }

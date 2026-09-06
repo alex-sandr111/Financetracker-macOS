@@ -9,15 +9,45 @@ struct EntryEditorView: View {
     @State private var title: String
     @State private var amountText: String
     @State private var kind: EntryKind
-    @State private var activeMonths: Set<Int>
+    @State private var recurrence: EntryRecurrence
+    @State private var customMonths: Set<Int>
+    @State private var quarterlyStartMonth: Int
+    @State private var yearlyMonth: Int
+    @State private var oneTimeMonth: Int
+    @State private var oneTimeYear: Int
     @State private var note: String
 
-    init(entry: FinanceEntry? = nil) {
+    init(
+        entry: FinanceEntry? = nil,
+        defaultKind: EntryKind = .expense,
+        defaultRecurrence: EntryRecurrence = .monthly
+    ) {
         self.entry = entry
+
+        let currentMonth = Calendar.current.component(.month, from: Date())
+        let currentYear = Calendar.current.component(.year, from: Date())
+        let existingRecurrence = entry?.recurrence ?? defaultRecurrence
+        let defaultMonths: [Int] = {
+            switch defaultRecurrence {
+            case .monthly:
+                Array(1...12)
+            case .quarterly:
+                [1, 4, 7, 10]
+            case .yearly, .custom, .oneTime:
+                [currentMonth]
+            }
+        }()
+        let existingMonths = entry?.activeMonths ?? defaultMonths
+
         _title = State(initialValue: entry?.title ?? "")
         _amountText = State(initialValue: entry.map { String(format: "%.2f", $0.amount) } ?? "")
-        _kind = State(initialValue: entry?.kind ?? .expense)
-        _activeMonths = State(initialValue: Set(entry?.activeMonths ?? Array(1...12)))
+        _kind = State(initialValue: entry?.kind ?? defaultKind)
+        _recurrence = State(initialValue: existingRecurrence)
+        _customMonths = State(initialValue: Set(existingMonths))
+        _quarterlyStartMonth = State(initialValue: Self.inferQuarterlyStart(from: existingMonths))
+        _yearlyMonth = State(initialValue: existingMonths.first ?? currentMonth)
+        _oneTimeMonth = State(initialValue: entry?.oneTimeMonth ?? currentMonth)
+        _oneTimeYear = State(initialValue: entry?.oneTimeYear ?? currentYear)
         _note = State(initialValue: entry?.note ?? "")
     }
 
@@ -36,46 +66,13 @@ struct EntryEditorView: View {
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Периодичность")
-
-                    HStack {
-                        Button("Каждый месяц") {
-                            activeMonths = Set(1...12)
-                        }
-
-                        Button("Раз в квартал") {
-                            activeMonths = [1, 4, 7, 10]
-                        }
-
-                        Button("Раз в год") {
-                            activeMonths = [Calendar.current.component(.month, from: Date())]
-                        }
-
-                        Button("Очистить") {
-                            activeMonths.removeAll()
-                        }
-                    }
-
-                    LazyVGrid(
-                        columns: Array(repeating: GridItem(.flexible()), count: 4),
-                        spacing: 8
-                    ) {
-                        ForEach(1...12, id: \.self) { month in
-                            Toggle(monthName(month), isOn: Binding(
-                                get: { activeMonths.contains(month) },
-                                set: { enabled in
-                                    if enabled {
-                                        activeMonths.insert(month)
-                                    } else {
-                                        activeMonths.remove(month)
-                                    }
-                                }
-                            ))
-                            .toggleStyle(.button)
-                        }
+                Picker("Периодичность", selection: $recurrence) {
+                    ForEach(EntryRecurrence.allCases) { recurrence in
+                        Text(recurrence.title).tag(recurrence)
                     }
                 }
+
+                recurrenceEditor
 
                 TextField("Примечание", text: $note)
             }
@@ -102,7 +99,78 @@ struct EntryEditorView: View {
             }
         }
         .padding(24)
-        .frame(width: 600)
+        .frame(width: 620)
+    }
+
+    @ViewBuilder
+    private var recurrenceEditor: some View {
+        switch recurrence {
+        case .monthly:
+            LabeledContent("Расписание") {
+                Text("Каждый месяц")
+                    .foregroundStyle(.secondary)
+            }
+
+        case .quarterly:
+            Picker("Первый платёж квартального цикла", selection: $quarterlyStartMonth) {
+                ForEach(1...3, id: \.self) { month in
+                    Text(FinanceEntry.monthName(month)).tag(month)
+                }
+            }
+
+            LabeledContent("Будет в месяцах") {
+                Text(quarterlyMonths.map(FinanceEntry.shortMonthName).joined(separator: ", "))
+                    .foregroundStyle(.secondary)
+            }
+
+        case .yearly:
+            Picker("Месяц", selection: $yearlyMonth) {
+                ForEach(1...12, id: \.self) { month in
+                    Text(FinanceEntry.monthName(month)).tag(month)
+                }
+            }
+
+        case .custom:
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Месяцы")
+
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible()), count: 4),
+                    spacing: 8
+                ) {
+                    ForEach(1...12, id: \.self) { month in
+                        Toggle(FinanceEntry.shortMonthName(month).capitalized, isOn: Binding(
+                            get: { customMonths.contains(month) },
+                            set: { enabled in
+                                if enabled {
+                                    customMonths.insert(month)
+                                } else {
+                                    customMonths.remove(month)
+                                }
+                            }
+                        ))
+                        .toggleStyle(.button)
+                    }
+                }
+            }
+
+        case .oneTime:
+            Picker("Месяц", selection: $oneTimeMonth) {
+                ForEach(1...12, id: \.self) { month in
+                    Text(FinanceEntry.monthName(month)).tag(month)
+                }
+            }
+
+            Stepper("Год: \(oneTimeYear)", value: $oneTimeYear, in: 2000...2100)
+
+            Text("Этот пункт появится только в выбранном месяце и не повторится в следующем году.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var quarterlyMonths: [Int] {
+        stride(from: quarterlyStartMonth, through: 12, by: 3).map { $0 }
     }
 
     private var normalizedAmount: Double? {
@@ -110,39 +178,70 @@ struct EntryEditorView: View {
     }
 
     private var canSave: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        normalizedAmount != nil &&
-        !activeMonths.isEmpty
+        guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              normalizedAmount != nil
+        else { return false }
+
+        if recurrence == .custom {
+            return !customMonths.isEmpty
+        }
+        return true
     }
 
     private func save() {
         guard let amount = normalizedAmount else { return }
 
+        let schedule = effectiveSchedule
+        let cleanedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanedNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
+
         if let entry {
             store.updateEntry(
                 entry,
-                title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                title: cleanedTitle,
                 amount: amount,
                 kind: kind,
-                activeMonths: Array(activeMonths),
-                note: note.trimmingCharacters(in: .whitespacesAndNewlines)
+                activeMonths: schedule.months,
+                recurrence: recurrence,
+                oneTimeYear: schedule.year,
+                oneTimeMonth: schedule.month,
+                note: cleanedNote
             )
         } else {
             store.addEntry(
-                title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                title: cleanedTitle,
                 amount: amount,
                 kind: kind,
-                activeMonths: Array(activeMonths),
-                note: note.trimmingCharacters(in: .whitespacesAndNewlines)
+                activeMonths: schedule.months,
+                recurrence: recurrence,
+                oneTimeYear: schedule.year,
+                oneTimeMonth: schedule.month,
+                note: cleanedNote
             )
         }
 
         dismiss()
     }
 
-    private func monthName(_ month: Int) -> String {
-        let symbols = Calendar.current.shortMonthSymbols
-        guard symbols.indices.contains(month - 1) else { return "\(month)" }
-        return symbols[month - 1].capitalized
+    private var effectiveSchedule: (months: [Int], year: Int?, month: Int?) {
+        switch recurrence {
+        case .monthly:
+            return (Array(1...12), nil, nil)
+        case .quarterly:
+            return (quarterlyMonths, nil, nil)
+        case .yearly:
+            return ([yearlyMonth], nil, nil)
+        case .custom:
+            return (Array(customMonths).sorted(), nil, nil)
+        case .oneTime:
+            return ([oneTimeMonth], oneTimeYear, oneTimeMonth)
+        }
+    }
+
+    private static func inferQuarterlyStart(from months: [Int]) -> Int {
+        guard FinanceEntry.isQuarterlyPattern(months), let first = months.sorted().first else {
+            return 1
+        }
+        return min(max(first, 1), 3)
     }
 }
