@@ -16,6 +16,8 @@
 		10000000000000000000001F /* FinanceTrackerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10000000000000000000001E /* FinanceTrackerApp.swift */; };
 		100000000000000000000021 /* AccountEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000020 /* AccountEditorView.swift */; };
 		100000000000000000000023 /* GoalEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000022 /* GoalEditorView.swift */; };
+		100000000000000000000025 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000024 /* Assets.xcassets */; };
+		100000000000000000000027 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000026 /* AppIcon.icns */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +31,8 @@
 		10000000000000000000001E /* FinanceTrackerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceTrackerApp.swift; sourceTree = "<group>"; };
 		100000000000000000000020 /* AccountEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountEditorView.swift; sourceTree = "<group>"; };
 		100000000000000000000022 /* GoalEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalEditorView.swift; sourceTree = "<group>"; };
+		100000000000000000000024 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		100000000000000000000026 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
 		100000000000000000000005 /* FinanceTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FinanceTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -49,6 +53,8 @@
 			10000000000000000000001E /* FinanceTrackerApp.swift */,
 			100000000000000000000020 /* AccountEditorView.swift */,
 			100000000000000000000022 /* GoalEditorView.swift */,
+			100000000000000000000024 /* Assets.xcassets */,
+			100000000000000000000026 /* AppIcon.icns */,
 		); path = FinanceTracker; sourceTree = "<group>"; };
 		100000000000000000000003 /* Products */ = {isa = PBXGroup; children = (100000000000000000000005 /* FinanceTracker.app */,); name = Products; sourceTree = "<group>"; };
 /* End PBXGroup section */
@@ -90,7 +96,10 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		100000000000000000000008 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		100000000000000000000008 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (
+			100000000000000000000025 /* Assets.xcassets in Resources */,
+			100000000000000000000027 /* AppIcon.icns in Resources */,
+		); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -130,6 +139,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = FinanceTracker;
+				INFOPLIST_KEY_CFBundleIconFile = AppIcon.icns;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MARKETING_VERSION = 0.3;
@@ -145,6 +155,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = FinanceTracker;
+				INFOPLIST_KEY_CFBundleIconFile = AppIcon.icns;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MARKETING_VERSION = 0.3;

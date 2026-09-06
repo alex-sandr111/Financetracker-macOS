@@ -5,7 +5,9 @@ import SwiftUI
 final class FinanceStore: ObservableObject {
     @Published private(set) var document: FinanceDocument
 
-    private let fileURL: URL
+    @Published private(set) var storageURL: URL
+
+    private let defaultStorageURL: URL
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
 
@@ -25,7 +27,14 @@ final class FinanceStore: ObservableObject {
             withIntermediateDirectories: true
         )
 
-        fileURL = folder.appendingPathComponent("finance.json")
+        defaultStorageURL = folder.appendingPathComponent("finance.json")
+
+        let savedPath = UserDefaults.standard.string(forKey: "FinanceTracker.activeStoragePath")
+        if let savedPath, !savedPath.isEmpty {
+            storageURL = URL(fileURLWithPath: savedPath)
+        } else {
+            storageURL = defaultStorageURL
+        }
 
         encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -34,7 +43,46 @@ final class FinanceStore: ObservableObject {
         decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
 
-        if let data = try? Data(contentsOf: fileURL),
+        if let data = try? Data(contentsOf: storageURL),
+           let decoded = try? decoder.decode(FinanceDocument.self, from: data) {
+            document = decoded
+        } else {
+            document = FinanceDocument()
+            save()
+        }
+    }
+
+    var isUsingDefaultStorage: Bool {
+        storageURL.standardizedFileURL == defaultStorageURL.standardizedFileURL
+    }
+
+    var storageFolderURL: URL {
+        storageURL.deletingLastPathComponent()
+    }
+
+    func switchStorage(toFolder folderURL: URL) throws {
+        save()
+
+        try FileManager.default.createDirectory(
+            at: folderURL,
+            withIntermediateDirectories: true
+        )
+
+        let newURL = folderURL.appendingPathComponent("finance.json")
+        storageURL = newURL
+        UserDefaults.standard.set(newURL.path, forKey: "FinanceTracker.activeStoragePath")
+        loadCurrentStorage()
+    }
+
+    func switchToDefaultStorage() {
+        save()
+        storageURL = defaultStorageURL
+        UserDefaults.standard.removeObject(forKey: "FinanceTracker.activeStoragePath")
+        loadCurrentStorage()
+    }
+
+    private func loadCurrentStorage() {
+        if let data = try? Data(contentsOf: storageURL),
            let decoded = try? decoder.decode(FinanceDocument.self, from: data) {
             document = decoded
         } else {
@@ -448,6 +496,6 @@ final class FinanceStore: ObservableObject {
 
     private func save() {
         guard let data = try? encoder.encode(document) else { return }
-        try? data.write(to: fileURL, options: [.atomic])
+        try? data.write(to: storageURL, options: [.atomic])
     }
 }

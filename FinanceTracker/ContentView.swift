@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 enum AppSection: String, CaseIterable, Identifiable {
     case dashboard = "Обзор"
@@ -23,6 +24,7 @@ struct ContentView: View {
     @State private var showingNewEntry = false
     @State private var showingNewAccount = false
     @State private var showingHistory = false
+    @State private var showingStorageSettings = false
 
     var body: some View {
         NavigationSplitView {
@@ -52,6 +54,12 @@ struct ContentView: View {
                 } label: {
                     Label("История", systemImage: "clock.arrow.circlepath")
                 }
+
+                Button {
+                    showingStorageSettings = true
+                } label: {
+                    Label("Хранилище данных", systemImage: "externaldrive")
+                }
             }
         }
         .sheet(isPresented: $showingNewEntry) {
@@ -66,6 +74,10 @@ struct ContentView: View {
             HistoryView()
                 .environmentObject(store)
         }
+        .sheet(isPresented: $showingStorageSettings) {
+            StorageSettingsView()
+                .environmentObject(store)
+        }
     }
 
     private var sidebar: some View {
@@ -74,6 +86,24 @@ struct ContentView: View {
                 ForEach(AppSection.allCases) { section in
                     Label(section.rawValue, systemImage: section.icon)
                         .tag(section)
+                }
+            }
+
+            if !store.isUsingDefaultStorage {
+                Section("Хранилище") {
+                    Button {
+                        showingStorageSettings = true
+                    } label: {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Label("Демо-хранилище", systemImage: "externaldrive.badge.checkmark")
+                                .fontWeight(.semibold)
+                            Text(store.storageFolderURL.path)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
@@ -125,6 +155,115 @@ struct ContentView: View {
         }
         .navigationTitle("Финансы")
         .frame(minWidth: 310)
+    }
+}
+
+
+private struct StorageSettingsView: View {
+    @EnvironmentObject private var store: FinanceStore
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var errorMessage: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Хранилище данных")
+                .font(.title2.bold())
+
+            Text("Все счета, расходы, цели и история снимков хранятся в одном finance.json. Можно временно переключиться на другую папку и работать там с полностью отдельными данными.")
+                .foregroundStyle(.secondary)
+
+            GroupBox {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label(
+                            store.isUsingDefaultStorage ? "Основное хранилище" : "Альтернативное хранилище",
+                            systemImage: store.isUsingDefaultStorage ? "internaldrive" : "externaldrive"
+                        )
+                        .fontWeight(.semibold)
+
+                        Spacer()
+
+                        if !store.isUsingDefaultStorage {
+                            Text("ДЕМО")
+                                .font(.caption.bold())
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(.orange.opacity(0.16), in: Capsule())
+                        }
+                    }
+
+                    Text(store.storageURL.path)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 4)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Button {
+                    chooseAlternativeFolder()
+                } label: {
+                    Label("Выбрать другую папку…", systemImage: "folder.badge.plus")
+                }
+                .buttonStyle(.borderedProminent)
+
+                Text("Если в выбранной папке уже есть finance.json, он будет открыт. Если нет — FinanceTracker создаст там новый файл с отдельными данными.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if !store.isUsingDefaultStorage {
+                Divider()
+
+                Button {
+                    store.switchToDefaultStorage()
+                    dismiss()
+                } label: {
+                    Label("Вернуться к основным данным", systemImage: "arrow.uturn.backward.circle")
+                }
+                .buttonStyle(.bordered)
+            }
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+
+            Spacer()
+
+            HStack {
+                Spacer()
+                Button("Закрыть") {
+                    dismiss()
+                }
+            }
+        }
+        .padding(24)
+        .frame(width: 620, height: 430)
+    }
+
+    private func chooseAlternativeFolder() {
+        let panel = NSOpenPanel()
+        panel.title = "Выберите папку для альтернативных данных FinanceTracker"
+        panel.prompt = "Использовать эту папку"
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = true
+        panel.directoryURL = store.storageFolderURL
+
+        guard panel.runModal() == .OK, let folderURL = panel.url else { return }
+
+        do {
+            try store.switchStorage(toFolder: folderURL)
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }
 
