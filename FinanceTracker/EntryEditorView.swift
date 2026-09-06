@@ -15,6 +15,7 @@ struct EntryEditorView: View {
     @State private var yearlyMonth: Int
     @State private var oneTimeMonth: Int
     @State private var oneTimeYear: Int
+    @State private var expenseForecastMode: ExpenseForecastMode
     @State private var note: String
 
     init(
@@ -48,6 +49,7 @@ struct EntryEditorView: View {
         _yearlyMonth = State(initialValue: existingMonths.first ?? currentMonth)
         _oneTimeMonth = State(initialValue: entry?.oneTimeMonth ?? currentMonth)
         _oneTimeYear = State(initialValue: entry?.oneTimeYear ?? currentYear)
+        _expenseForecastMode = State(initialValue: entry?.expenseForecastMode ?? .fixed)
         _note = State(initialValue: entry?.note ?? "")
     }
 
@@ -73,6 +75,20 @@ struct EntryEditorView: View {
                 }
 
                 recurrenceEditor
+
+                if kind == .expense {
+                    Picker("Учёт в прогнозе", selection: $expenseForecastMode) {
+                        ForEach(ExpenseForecastMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
+                    }
+
+                    if expenseForecastMode == .monthlyBudget {
+                        Text("Сумма считается месячным бюджетом: 1–7 числа учитывается 100%, 8–14 — 75%, 15–21 — 50%, 22–28 — 25%, с 29-го — 0%. Будущий месяц всегда учитывается полностью.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
 
                 TextField("Примечание", text: $note)
             }
@@ -161,7 +177,9 @@ struct EntryEditorView: View {
                 }
             }
 
-            Stepper("Год: \(oneTimeYear)", value: $oneTimeYear, in: 2000...2100)
+            Stepper(value: $oneTimeYear, in: 2000...2100) {
+                Text(verbatim: "Год: \(oneTimeYear)")
+            }
 
             Text("Этот пункт появится только в выбранном месяце и не повторится в следующем году.")
                 .font(.caption)
@@ -205,6 +223,7 @@ struct EntryEditorView: View {
                 recurrence: recurrence,
                 oneTimeYear: schedule.year,
                 oneTimeMonth: schedule.month,
+                expenseForecastMode: kind == .expense ? expenseForecastMode : .fixed,
                 note: cleanedNote
             )
         } else {
@@ -216,6 +235,7 @@ struct EntryEditorView: View {
                 recurrence: recurrence,
                 oneTimeYear: schedule.year,
                 oneTimeMonth: schedule.month,
+                expenseForecastMode: kind == .expense ? expenseForecastMode : .fixed,
                 note: cleanedNote
             )
         }

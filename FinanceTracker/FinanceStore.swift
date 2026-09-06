@@ -45,6 +45,7 @@ final class FinanceStore: ObservableObject {
 
     var selectedYear: Int { document.selectedYear }
     var selectedMonth: Int { document.selectedMonth }
+    var lastBalanceUpdatedAt: Date? { document.lastBalanceUpdatedAt }
 
     var accounts: [Account] { document.accounts }
     var entries: [FinanceEntry] { document.entries }
@@ -114,7 +115,53 @@ final class FinanceStore: ObservableObject {
     var remainingExpenses: Double {
         activeExpenses
             .filter { !isCompleted($0) }
-            .reduce(0) { $0 + $1.amount }
+            .reduce(0) { $0 + remainingExpenseAmount(for: $1) }
+    }
+
+    func remainingExpenseAmount(for entry: FinanceEntry) -> Double {
+        guard entry.kind == .expense, !isCompleted(entry) else { return 0 }
+
+        let referenceDate = budgetReferenceDate(
+            forYear: selectedYear,
+            month: selectedMonth
+        )
+
+        return entry.remainingExpenseAmount(
+            in: selectedYear,
+            month: selectedMonth,
+            at: referenceDate
+        )
+    }
+
+    func remainingExpenseFraction(for entry: FinanceEntry) -> Double {
+        guard entry.kind == .expense, !isCompleted(entry) else { return 0 }
+
+        let referenceDate = budgetReferenceDate(
+            forYear: selectedYear,
+            month: selectedMonth
+        )
+
+        return entry.remainingExpenseFraction(
+            in: selectedYear,
+            month: selectedMonth,
+            at: referenceDate
+        )
+    }
+
+    private func budgetReferenceDate(
+        forYear year: Int,
+        month: Int,
+        relativeTo comparisonDate: Date = Date()
+    ) -> Date {
+        if let lastBalanceUpdatedAt = document.lastBalanceUpdatedAt {
+            return lastBalanceUpdatedAt
+        }
+
+        return FinanceEntry.fallbackBudgetReferenceDate(
+            forYear: year,
+            month: month,
+            relativeTo: comparisonDate
+        )
     }
 
     var remainingIncome: Double {
@@ -177,15 +224,22 @@ final class FinanceStore: ObservableObject {
         document.accounts.append(
             Account(name: name, balance: balance, includeInForecast: includeInForecast)
         )
+        if includeInForecast {
+            document.lastBalanceUpdatedAt = Date()
+        }
         persistAndPublish()
     }
 
     func updateAccount(_ account: Account, name: String, balance: Double, includeInForecast: Bool) {
         guard let index = document.accounts.firstIndex(where: { $0.id == account.id }) else { return }
         captureSnapshot(reason: "Обновлён счёт \(account.name)")
+        let affectsForecast = document.accounts[index].includeInForecast || includeInForecast
         document.accounts[index].name = name
         document.accounts[index].balance = balance
         document.accounts[index].includeInForecast = includeInForecast
+        if affectsForecast {
+            document.lastBalanceUpdatedAt = Date()
+        }
         persistAndPublish()
     }
 
@@ -203,6 +257,7 @@ final class FinanceStore: ObservableObject {
         recurrence: EntryRecurrence,
         oneTimeYear: Int?,
         oneTimeMonth: Int?,
+        expenseForecastMode: ExpenseForecastMode,
         note: String
     ) {
         captureSnapshot(reason: "Добавлен \(kind.rawValue.lowercased()) \(title)")
@@ -215,6 +270,7 @@ final class FinanceStore: ObservableObject {
                 recurrence: recurrence,
                 oneTimeYear: oneTimeYear,
                 oneTimeMonth: oneTimeMonth,
+                expenseForecastMode: expenseForecastMode,
                 note: note
             )
         )
@@ -230,6 +286,7 @@ final class FinanceStore: ObservableObject {
         recurrence: EntryRecurrence,
         oneTimeYear: Int?,
         oneTimeMonth: Int?,
+        expenseForecastMode: ExpenseForecastMode,
         note: String
     ) {
         guard let index = document.entries.firstIndex(where: { $0.id == entry.id }) else { return }
@@ -241,6 +298,7 @@ final class FinanceStore: ObservableObject {
         document.entries[index].recurrence = recurrence
         document.entries[index].oneTimeYear = oneTimeYear
         document.entries[index].oneTimeMonth = oneTimeMonth
+        document.entries[index].expenseForecastMode = expenseForecastMode
         document.entries[index].note = note
         persistAndPublish()
     }
@@ -320,6 +378,7 @@ final class FinanceStore: ObservableObject {
         document.completion = snapshot.payload.completion
         document.selectedYear = snapshot.payload.selectedYear
         document.selectedMonth = snapshot.payload.selectedMonth
+        document.lastBalanceUpdatedAt = snapshot.payload.lastBalanceUpdatedAt
         persistAndPublish(makeSnapshot: false)
     }
 
@@ -338,7 +397,8 @@ final class FinanceStore: ObservableObject {
             goals: document.goals,
             completion: document.completion,
             selectedYear: document.selectedYear,
-            selectedMonth: document.selectedMonth
+            selectedMonth: document.selectedMonth,
+            lastBalanceUpdatedAt: document.lastBalanceUpdatedAt
         )
 
         document.snapshots.append(

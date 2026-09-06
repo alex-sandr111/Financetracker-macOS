@@ -14,6 +14,21 @@ enum EntryKind: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+
+enum ExpenseForecastMode: String, Codable, CaseIterable, Identifiable {
+    case fixed
+    case monthlyBudget
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .fixed: "Обычный расход"
+        case .monthlyBudget: "Бюджет на весь месяц"
+        }
+    }
+}
+
 enum EntryRecurrence: String, Codable, CaseIterable, Identifiable {
     case monthly
     case quarterly
@@ -44,6 +59,7 @@ struct FinanceEntry: Identifiable, Codable, Hashable {
     var recurrence: EntryRecurrence
     var oneTimeYear: Int?
     var oneTimeMonth: Int?
+    var expenseForecastMode: ExpenseForecastMode
     var note: String
 
     init(
@@ -55,6 +71,7 @@ struct FinanceEntry: Identifiable, Codable, Hashable {
         recurrence: EntryRecurrence? = nil,
         oneTimeYear: Int? = nil,
         oneTimeMonth: Int? = nil,
+        expenseForecastMode: ExpenseForecastMode = .fixed,
         note: String = ""
     ) {
         self.id = id
@@ -65,6 +82,7 @@ struct FinanceEntry: Identifiable, Codable, Hashable {
         self.recurrence = recurrence ?? Self.inferRecurrence(from: activeMonths)
         self.oneTimeYear = oneTimeYear
         self.oneTimeMonth = oneTimeMonth
+        self.expenseForecastMode = expenseForecastMode
         self.note = note
     }
 
@@ -73,6 +91,73 @@ struct FinanceEntry: Identifiable, Codable, Hashable {
             return oneTimeYear == year && oneTimeMonth == month
         }
         return activeMonths.contains(month)
+    }
+
+
+    func remainingExpenseFraction(
+        in year: Int,
+        month: Int,
+        at date: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Double {
+        guard kind == .expense, isActive(in: year, month: month) else { return 0 }
+        guard expenseForecastMode == .monthlyBudget else { return 1 }
+
+        let currentYear = calendar.component(.year, from: date)
+        let currentMonth = calendar.component(.month, from: date)
+
+        if year > currentYear || (year == currentYear && month > currentMonth) {
+            return 1
+        }
+
+        if year < currentYear || (year == currentYear && month < currentMonth) {
+            return 0
+        }
+
+        let day = max(calendar.component(.day, from: date), 1)
+        let elapsedSevenDayPeriods = min((day - 1) / 7, 4)
+        return max(0, 1 - Double(elapsedSevenDayPeriods) * 0.25)
+    }
+
+    func remainingExpenseAmount(
+        in year: Int,
+        month: Int,
+        at date: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Double {
+        amount * remainingExpenseFraction(in: year, month: month, at: date, calendar: calendar)
+    }
+
+    static func fallbackBudgetReferenceDate(
+        forYear year: Int,
+        month: Int,
+        relativeTo comparisonDate: Date,
+        calendar: Calendar = .current
+    ) -> Date {
+        let comparisonYear = calendar.component(.year, from: comparisonDate)
+        let comparisonMonth = calendar.component(.month, from: comparisonDate)
+
+        let isPastMonth =
+            year < comparisonYear ||
+            (year == comparisonYear && month < comparisonMonth)
+
+        var components = DateComponents()
+        components.year = year
+        components.month = month
+
+        if isPastMonth {
+            components.day = 1
+            guard let firstDay = calendar.date(from: components),
+                  let nextMonth = calendar.date(byAdding: .month, value: 1, to: firstDay),
+                  let lastDay = calendar.date(byAdding: .day, value: -1, to: nextMonth)
+            else {
+                return comparisonDate
+            }
+            return lastDay
+        }
+
+        components.day = 1
+        return calendar.date(from: components) ?? comparisonDate
     }
 
     var recurrenceDescription: String {
@@ -134,7 +219,7 @@ struct FinanceEntry: Identifiable, Codable, Hashable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, title, amount, kind, activeMonths, recurrence, oneTimeYear, oneTimeMonth, note
+        case id, title, amount, kind, activeMonths, recurrence, oneTimeYear, oneTimeMonth, expenseForecastMode, note
     }
 
     init(from decoder: Decoder) throws {
@@ -148,6 +233,7 @@ struct FinanceEntry: Identifiable, Codable, Hashable {
             ?? Self.inferRecurrence(from: activeMonths)
         oneTimeYear = try container.decodeIfPresent(Int.self, forKey: .oneTimeYear)
         oneTimeMonth = try container.decodeIfPresent(Int.self, forKey: .oneTimeMonth)
+        expenseForecastMode = try container.decodeIfPresent(ExpenseForecastMode.self, forKey: .expenseForecastMode) ?? .fixed
         note = try container.decodeIfPresent(String.self, forKey: .note) ?? ""
     }
 }
@@ -192,9 +278,10 @@ struct SnapshotPayload: Codable, Hashable {
     var completion: [String: Bool]
     var selectedYear: Int
     var selectedMonth: Int
+    var lastBalanceUpdatedAt: Date?
 
     enum CodingKeys: String, CodingKey {
-        case accounts, entries, goals, completion, selectedYear, selectedMonth
+        case accounts, entries, goals, completion, selectedYear, selectedMonth, lastBalanceUpdatedAt
     }
 
     init(
@@ -203,7 +290,8 @@ struct SnapshotPayload: Codable, Hashable {
         goals: [SavingsGoal],
         completion: [String: Bool],
         selectedYear: Int,
-        selectedMonth: Int
+        selectedMonth: Int,
+        lastBalanceUpdatedAt: Date?
     ) {
         self.accounts = accounts
         self.entries = entries
@@ -211,6 +299,7 @@ struct SnapshotPayload: Codable, Hashable {
         self.completion = completion
         self.selectedYear = selectedYear
         self.selectedMonth = selectedMonth
+        self.lastBalanceUpdatedAt = lastBalanceUpdatedAt
     }
 
     init(from decoder: Decoder) throws {
@@ -221,6 +310,7 @@ struct SnapshotPayload: Codable, Hashable {
         completion = try container.decode([String: Bool].self, forKey: .completion)
         selectedYear = try container.decode(Int.self, forKey: .selectedYear)
         selectedMonth = try container.decode(Int.self, forKey: .selectedMonth)
+        lastBalanceUpdatedAt = try container.decodeIfPresent(Date.self, forKey: .lastBalanceUpdatedAt)
     }
 }
 
@@ -238,10 +328,11 @@ struct FinanceDocument: Codable {
     var completion: [String: Bool]
     var selectedYear: Int
     var selectedMonth: Int
+    var lastBalanceUpdatedAt: Date?
     var snapshots: [FinanceSnapshot]
 
     enum CodingKeys: String, CodingKey {
-        case accounts, entries, goals, completion, selectedYear, selectedMonth, snapshots
+        case accounts, entries, goals, completion, selectedYear, selectedMonth, lastBalanceUpdatedAt, snapshots
     }
 
     init() {
@@ -273,6 +364,7 @@ struct FinanceDocument: Codable {
         completion = [:]
         selectedYear = Calendar.current.component(.year, from: Date())
         selectedMonth = Calendar.current.component(.month, from: Date())
+        lastBalanceUpdatedAt = nil
         snapshots = []
     }
 
@@ -287,6 +379,7 @@ struct FinanceDocument: Codable {
             ?? Calendar.current.component(.year, from: Date())
         selectedMonth = try container.decodeIfPresent(Int.self, forKey: .selectedMonth)
             ?? Calendar.current.component(.month, from: Date())
+        lastBalanceUpdatedAt = try container.decodeIfPresent(Date.self, forKey: .lastBalanceUpdatedAt)
         snapshots = try container.decodeIfPresent([FinanceSnapshot].self, forKey: .snapshots) ?? []
     }
 }

@@ -191,9 +191,22 @@ private struct SnapshotDetailView: View {
             .filter { $0.kind == .income && !isCompleted($0, snapshot) }
             .reduce(0) { $0 + $1.amount }
 
+        let budgetReferenceDate = snapshot.payload.lastBalanceUpdatedAt
+            ?? FinanceEntry.fallbackBudgetReferenceDate(
+                forYear: snapshot.payload.selectedYear,
+                month: month,
+                relativeTo: snapshot.createdAt
+            )
+
         let expenses = active
             .filter { $0.kind == .expense && !isCompleted($0, snapshot) }
-            .reduce(0) { $0 + $1.amount }
+            .reduce(0) { total, entry in
+                total + entry.remainingExpenseAmount(
+                    in: snapshot.payload.selectedYear,
+                    month: month,
+                    at: budgetReferenceDate
+                )
+            }
 
         return (assets, income, expenses, assets + income - expenses)
     }

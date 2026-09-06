@@ -26,6 +26,10 @@ struct AccountEditorView: View {
                 TextField("Название", text: $name)
                 TextField("Текущий остаток, €", text: $balanceText)
                 Toggle("Учитывать в общем прогнозе", isOn: $includeInForecast)
+
+                Text("При сохранении счёта, который участвует в прогнозе, текущий остаток будет считаться актуальным на этот момент. Эта дата используется для расчёта месячных бюджетов.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             HStack {

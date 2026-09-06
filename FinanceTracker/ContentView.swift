@@ -135,11 +135,22 @@ struct DashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text(AppFormatting.monthTitle(
-                    year: store.selectedYear,
-                    month: store.selectedMonth
-                ))
-                .font(.largeTitle.bold())
+                HStack {
+                    Text(AppFormatting.monthTitle(
+                        year: store.selectedYear,
+                        month: store.selectedMonth
+                    ))
+                    .font(.largeTitle.bold())
+
+                    Spacer()
+
+                    Button {
+                        showingNewEntry = true
+                    } label: {
+                        Label("Добавить доход или расход", systemImage: "plus")
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
 
                 HStack(spacing: 12) {
                     SummaryCard(
@@ -165,6 +176,22 @@ struct DashboardView: View {
                     )
                 }
 
+                if let date = store.lastBalanceUpdatedAt {
+                    Label(
+                        "Месячные бюджеты рассчитаны по балансу, актуальному на \(date.formatted(date: .abbreviated, time: .shortened))",
+                        systemImage: "clock"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                } else {
+                    Label(
+                        "Баланс ещё не обновлялся после установки этой версии — месячные бюджеты пока учитываются полностью.",
+                        systemImage: "clock.badge.questionmark"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+
                 EntrySection(
                     title: "Доходы",
                     entries: store.activeIncomes,
@@ -176,13 +203,6 @@ struct DashboardView: View {
                     entries: store.activeExpenses,
                     emptyText: "На этот месяц расходы не запланированы."
                 )
-
-                Button {
-                    showingNewEntry = true
-                } label: {
-                    Label("Добавить доход или расход", systemImage: "plus")
-                }
-                .buttonStyle(.borderedProminent)
             }
             .padding(24)
         }
@@ -257,6 +277,13 @@ struct EntryRow: View {
 
     @State private var showingEdit = false
 
+    private var displayedAmount: Double {
+        if entry.kind == .expense && entry.expenseForecastMode == .monthlyBudget {
+            return store.remainingExpenseAmount(for: entry)
+        }
+        return entry.amount
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             Button {
@@ -268,14 +295,32 @@ struct EntryRow: View {
             .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(entry.title)
-                    .strikethrough(store.isCompleted(entry))
-                    .foregroundStyle(store.isCompleted(entry) ? .secondary : .primary)
+                HStack(spacing: 7) {
+                    Text(entry.title)
+                        .strikethrough(store.isCompleted(entry))
+                        .foregroundStyle(store.isCompleted(entry) ? .secondary : .primary)
+
+                    if entry.kind == .expense && entry.expenseForecastMode == .monthlyBudget {
+                        GradualExpenseBadge()
+                    }
+                }
 
                 if entry.recurrence != .monthly {
                     Text(entry.recurrenceDescription)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                if entry.kind == .expense && entry.expenseForecastMode == .monthlyBudget {
+                    if let date = store.lastBalanceUpdatedAt {
+                        Text("Бюджет на месяц · по балансу от \(date.formatted(date: .numeric, time: .omitted)) учитывается \(Int((store.remainingExpenseFraction(for: entry) * 100).rounded()))%")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Бюджет на месяц · баланс ещё не обновлялся · учитывается 100%")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 if !entry.note.isEmpty {
@@ -287,10 +332,21 @@ struct EntryRow: View {
 
             Spacer()
 
-            Text(AppFormatting.money(entry.amount))
-                .fontWeight(.semibold)
-                .monospacedDigit()
-                .foregroundStyle(store.isCompleted(entry) ? .secondary : .primary)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(AppFormatting.money(displayedAmount))
+                    .fontWeight(.semibold)
+                    .monospacedDigit()
+                    .foregroundStyle(store.isCompleted(entry) ? .secondary : .primary)
+
+                if entry.kind == .expense &&
+                    entry.expenseForecastMode == .monthlyBudget &&
+                    !store.isCompleted(entry) &&
+                    displayedAmount != entry.amount {
+                    Text("из \(AppFormatting.money(entry.amount))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
 
             Button {
                 showingEdit = true
@@ -305,6 +361,21 @@ struct EntryRow: View {
             EntryEditorView(entry: entry)
                 .environmentObject(store)
         }
+    }
+}
+
+private struct GradualExpenseBadge: View {
+    var body: some View {
+        Label("Постепенно", systemImage: "hourglass")
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.tint)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(
+                Capsule()
+                    .fill(Color.accentColor.opacity(0.12))
+            )
+            .accessibilityLabel("Расход постепенно уменьшается в прогнозе")
     }
 }
 
@@ -484,8 +555,14 @@ private struct IrregularExpenseRow: View {
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(entry.title)
-                    .fontWeight(.semibold)
+                HStack(spacing: 7) {
+                    Text(entry.title)
+                        .fontWeight(.semibold)
+
+                    if entry.expenseForecastMode == .monthlyBudget {
+                        GradualExpenseBadge()
+                    }
+                }
 
                 Text(entry.recurrenceDescription)
                     .font(.caption)
