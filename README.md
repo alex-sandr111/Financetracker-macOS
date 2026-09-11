@@ -100,3 +100,7 @@ Dock icon is now also set explicitly at runtime through `NSApplication.applicati
 ```
 
 Результат появится в `dist/FinanceTracker.app` и `dist/FinanceTracker.zip`.
+## Сортировка выполненных расходов
+
+В месячном списке невыполненные расходы показываются первыми. Расходы, отмеченные как выполненные, автоматически перемещаются в конец списка.
+

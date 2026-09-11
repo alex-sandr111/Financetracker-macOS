@@ -121,7 +121,16 @@ final class FinanceStore: ObservableObject {
         document.entries.filter {
             $0.kind == .expense && $0.isActive(in: selectedYear, month: selectedMonth)
         }
-        .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        .sorted { lhs, rhs in
+            let lhsCompleted = isCompleted(lhs)
+            let rhsCompleted = isCompleted(rhs)
+
+            if lhsCompleted != rhsCompleted {
+                return !lhsCompleted
+            }
+
+            return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+        }
     }
 
     var activeIncomes: [FinanceEntry] {
